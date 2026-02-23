@@ -1,13 +1,15 @@
-# All Purpose Table
+# All Purpose Table WIP
 
-A production-grade, plug-and-play React table component with TypeScript support. Zero configuration required. No styling dependencies.
+Universal React table component with TypeScript support and no dependencies or configuration required.
+Use one table component for everything in your app.
+DEMOs coming soon.
 
 ## ✨ Features
 
-- 🎯 **Plug and Play** - Just install and use, no configuration needed
-- 📦 **Zero Dependencies** - No Tailwind, no CSS frameworks required
-- 🔷 **TypeScript Native** - Full type safety and IntelliSense support
-- 🎨 **Dark Mode** - Automatic dark mode support via CSS
+- 🎯 **Plug and Play** - Install and use, no configuration needed
+- 📦 **Zero Dependencies** - No CSS frameworks required
+- 🟦 **TypeScript Native** - Full type safety and IntelliSense support
+- 🌑 **Dark Mode** - Automatic dark mode support via CSS
 - 📊 **Feature Rich**:
   - Sorting (multi-column support)
   - Pagination
@@ -16,7 +18,8 @@ A production-grade, plug-and-play React table component with TypeScript support.
   - Expandable rows
   - Custom cell renderers
   - Row click handlers
-  - Persistent column widths (localStorage)
+  - Persistent column widths (with localStorage)
+  - Persistent column visibility (with localStorage)
   - Mobile responsive with auto-sizing
   - Virtual scrolling ready
 
@@ -26,7 +29,7 @@ A production-grade, plug-and-play React table component with TypeScript support.
 npm install all-purpose-table
 ```
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
 ### JavaScript
 
@@ -74,26 +77,26 @@ function App() {
 
 ### Table Props
 
-| Prop                          | Type                 | Default         | Description                                   |
-| ----------------------------- | -------------------- | --------------- | --------------------------------------------- |
-| `manualHeaders`               | `TableHeader[]`      | **required**    | Array of column definitions                   |
-| `manualRowData`               | `object[]`           | **required**    | Array of data objects                         |
-| `height`                      | `string`             | `"100%"`        | Table container height                        |
-| `rowHeight`                   | `number`             | `40`            | Height of each row in pixels                  |
-| `rowsPerPage`                 | `number`             | `60`            | Number of rows per page                       |
-| `shouldPaginate`              | `boolean`            | `true`          | Enable/disable pagination                     |
-| `initialSort`                 | `SortConfig`         | `null`          | Initial sort configuration                    |
-| `rowClassName`                | `(row) => string`    | `undefined`     | Custom row class names                        |
-| `onRowClick`                  | `(row) => void`      | `undefined`     | Row click handler                             |
-| `minColWidth`                 | `number`             | `50`            | Minimum column width in pixels                |
-| `columnWidthsStorageKey`      | `string`             | `undefined`     | localStorage key for persisting column widths |
-| `rowsPerPageOptions`          | `number[]`           | `[20, 50, 100]` | Options for rows per page selector            |
-| `onRowsPerPageChange`         | `(value) => void`    | `undefined`     | Callback when rows per page changes           |
-| `expandedRowId`               | `string`             | `null`          | ID of currently expanded row                  |
-| `renderExpandedRow`           | `(row) => ReactNode` | `undefined`     | Render function for expanded row content      |
-| `renderFullRow`               | `(row) => ReactNode` | `undefined`     | Render function for custom full-width rows    |
-| `mobileAutoSizeOnHeaderClick` | `boolean`            | `false`         | Enable mobile auto-sizing on header click     |
-| `mobileBreakpoint`            | `number`             | `768`           | Mobile breakpoint in pixels                   |
+| Prop                          | Type                 | Default         | Description                                                                     |
+| ----------------------------- | -------------------- | --------------- | ------------------------------------------------------------------------------- |
+| `manualHeaders`               | `TableHeader[]`      | **required**    | Array of column definitions                                                     |
+| `manualRowData`               | `object[]`           | **required**    | Array of data objects                                                           |
+| `height`                      | `string`             | `"100%"`        | Table container height                                                          |
+| `rowHeight`                   | `number`             | `40`            | Height of each row in pixels                                                    |
+| `shouldPaginate`              | `boolean`            | `true`          | Enable/disable pagination                                                       |
+| `rowsPerPage`                 | `number`             | `60`            | Number of rows per page                                                         |
+| `initialSort`                 | `SortConfig`         | `null`          | Initial sort configuration                                                      |
+| `rowClassName`                | `(row) => string`    | `undefined`     | Custom row class names                                                          |
+| `onRowClick`                  | `(row) => void`      | `undefined`     | Row click handler                                                               |
+| `minColWidth`                 | `number`             | `50`            | Minimum column width in pixels                                                  |
+| `columnWidthsStorageKey`      | `string`             | `undefined`     | localStorage key for persisting column widths                                   |
+| `rowsPerPageOptions`          | `number[]`           | `[20, 50, 100]` | Options for rows per page selector                                              |
+| `onRowsPerPageChange`         | `(value) => void`    | `undefined`     | Callback when rows per page changes                                             |
+| `expandedRowId`               | `string`             | `null`          | ID of currently expanded row                                                    |
+| `renderExpandedRow`           | `(row) => ReactNode` | `undefined`     | Render function for expanded row content                                        |
+| `renderFullRow`               | `(row) => ReactNode` | `undefined`     | Render function for custom full-width rows (can be used as header/dropdown row) |
+| `mobileAutoSizeOnHeaderClick` | `boolean`            | `false`         | Enable mobile auto-sizing on header click                                       |
+| `mobileBreakpoint`            | `number`             | `768`           | Mobile breakpoint in pixels                                                     |
 
 ### TableHeader Interface
 
@@ -112,7 +115,7 @@ interface TableHeader {
 }
 ```
 
-## 🎨 Advanced Usage
+## 🔩 Advanced Usage
 
 ### Custom Cell Renderers
 
@@ -263,7 +266,7 @@ The table is fully responsive and includes:
 - Touch-friendly column resizing
 - Configurable mobile breakpoint
 
-## 🌙 Dark Mode
+## 🌙 Themes
 
 Dark mode is supported automatically via CSS `prefers-color-scheme`. No JavaScript required!
 
@@ -278,11 +281,3 @@ Dark mode is supported automatically via CSS `prefers-color-scheme`. No JavaScri
 ## 📄 License
 
 MIT
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📮 Support
-
-For issues and feature requests, please use the GitHub issues page.
