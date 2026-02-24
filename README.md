@@ -270,7 +270,7 @@ The table is fully responsive and includes:
 
 Dark mode is supported automatically via CSS `prefers-color-scheme`. No JavaScript required!
 
-## 🚢 Production Ready
+## 🏭 Production Ready
 
 - **Tree-shakeable** - Only bundle what you use
 - **TypeScript** - Full type definitions included

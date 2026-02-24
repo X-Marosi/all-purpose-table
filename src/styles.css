@@ -26,6 +26,7 @@
   --apt-btn-hover-bg: #d1d5db;
 }
 
+/* Dark mode support - both system preference and manual class toggle */
 @media (prefers-color-scheme: dark) {
   :root {
     --apt-color-primary: #eee;
@@ -49,6 +50,30 @@
     --apt-btn-bg: #444;
     --apt-btn-hover-bg: #555;
   }
+}
+
+/* Manual dark mode class support */
+.dark {
+  --apt-color-primary: #eee;
+  --apt-color-border: #333;
+  --apt-color-bg: #1e1e1e;
+  --apt-color-bg-secondary: #333;
+  --apt-color-bg-hover: rgba(126, 126, 126, 0.15);
+  --apt-color-text: #eee;
+  --apt-color-text-muted: #d1d5db;
+  --apt-color-text-muted-light: #444;
+  --apt-color-accent: #a855f7;
+  
+  /* Resizer colors */
+  --apt-resizer-color: #666;
+  --apt-resizer-hover-color: #999;
+  
+  /* Sortable header hover */
+  --apt-th-sortable-hover: #444;
+  
+  /* Button colors */
+  --apt-btn-bg: #444;
+  --apt-btn-hover-bg: #555;
 }
 
 /* Base container for table */
