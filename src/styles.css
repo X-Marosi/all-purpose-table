@@ -52,8 +52,10 @@
   }
 }
 
-/* Manual dark mode class support */
-.dark {
+/* Manual dark mode class support - use higher specificity */
+html.dark, 
+.dark,
+:root.dark {
   --apt-color-primary: #eee;
   --apt-color-border: #333;
   --apt-color-bg: #1e1e1e;
@@ -74,6 +76,34 @@
   /* Button colors */
   --apt-btn-bg: #444;
   --apt-btn-hover-bg: #555;
+}
+
+/* Also support light mode class for explicit light theme */
+html.light,
+.light,
+:root.light {
+  --apt-color-primary: #371f1f;
+  --apt-color-border: #d1d5db;
+  --apt-color-bg: white;
+  --apt-color-bg-secondary: #e5e7eb;
+  --apt-color-bg-hover: #f3f4f6;
+  --apt-color-text: #1f2937;
+  --apt-color-text-muted: #6b7280;
+  --apt-color-text-muted-light: #9ca3af;
+  --apt-color-accent: #9333ea;
+  --apt-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --apt-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Resizer colors */
+  --apt-resizer-color: #bbb;
+  --apt-resizer-hover-color: #888;
+  
+  /* Sortable header hover */
+  --apt-th-sortable-hover: #d1d5db;
+  
+  /* Button colors */
+  --apt-btn-bg: white;
+  --apt-btn-hover-bg: #d1d5db;
 }
 
 /* Base container for table */
