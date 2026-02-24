@@ -54,7 +54,7 @@ const SortIcon: React.FC<{ className?: string }> = ({ className }) => (
     viewBox="0 0 12 12"
     fill="currentColor"
   >
-    <path d="M6 3L3 6h6L6 3zM6 9l3-3H3l3 3z" />
+    <path d="M6 2L3 5h6L6 2zM6 10l3-3H3l3 3z" />
   </svg>
 );
 
