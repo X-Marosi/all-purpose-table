@@ -82,6 +82,29 @@ const SortDownIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+// ============= Utilities =============
+
+function loadStoredColumnWidths(
+  columnWidthsStorageKey: string | undefined,
+  fallback: Record<string, string | number | undefined>,
+): Record<string, string | number | undefined> {
+  if (!columnWidthsStorageKey || typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(columnWidthsStorageKey);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return fallback;
+    const next = { ...fallback };
+    Object.keys(next).forEach((key) => {
+      const val = parsed[key];
+      if (typeof val === "number" || typeof val === "string") next[key] = val;
+    });
+    return next;
+  } catch {
+    return fallback;
+  }
+}
+
 // ============= Main Component =============
 
 const Table: React.FC<TableProps> = ({
@@ -126,30 +149,7 @@ const Table: React.FC<TableProps> = ({
 
   const headers = useMemo(() => manualHeaders || [], [manualHeaders]);
 
-  const loadStoredColumnWidths = (
-    fallback: Record<string, string | number | undefined>,
-  ) => {
-    if (!columnWidthsStorageKey || typeof window === "undefined") {
-      return fallback;
-    }
-    try {
-      const raw = window.localStorage.getItem(columnWidthsStorageKey);
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return fallback;
-      const next = { ...fallback };
-      Object.keys(next).forEach((key) => {
-        const val = parsed[key];
-        if (typeof val === "number" || typeof val === "string") {
-          next[key] = val;
-        }
-      });
-      return next;
-    } catch {
-      return fallback;
-    }
-  };
-
+  // Reset column widths, expanded columns, and page when headers/storage key changes
   useEffect(() => {
     const initialWidths: Record<string, string | number | undefined> = {};
     headers.forEach((header) => {
@@ -157,9 +157,13 @@ const Table: React.FC<TableProps> = ({
     });
     initialColumnWidthsRef.current = initialWidths;
     setColumnWidths(
-      loadStoredColumnWidths(initialWidths) as Record<string, string | number>,
+      loadStoredColumnWidths(columnWidthsStorageKey, initialWidths) as Record<
+        string,
+        string | number
+      >,
     );
     setExpandedColumns(new Set());
+    setCurrentPage(1);
   }, [headers, columnWidthsStorageKey]);
 
   useEffect(() => {
@@ -178,10 +182,6 @@ const Table: React.FC<TableProps> = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [mobileBreakpoint]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [rowsPerPage]);
 
   const measureTextWidth = (text: any): number => {
     if (typeof document === "undefined") return String(text ?? "").length * 8;
@@ -277,15 +277,14 @@ const Table: React.FC<TableProps> = ({
     ? Math.ceil(sortedRows.length / rowsPerPage)
     : 1;
 
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(1);
-  }
+  // Clamp page to valid range — avoids setState-during-render
+  const safePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1;
 
   const paginatedRows = useMemo(() => {
     if (!effectiveShouldPaginate) return sortedRows;
-    const startIndex = (currentPage - 1) * rowsPerPage;
+    const startIndex = (safePage - 1) * rowsPerPage;
     return sortedRows.slice(startIndex, startIndex + rowsPerPage);
-  }, [sortedRows, currentPage, rowsPerPage, effectiveShouldPaginate]);
+  }, [sortedRows, safePage, rowsPerPage, effectiveShouldPaginate]);
 
   const handleSort = (key: string, isSortable?: boolean) => {
     if (!isSortable) return;
@@ -589,14 +588,14 @@ const Table: React.FC<TableProps> = ({
                   )}
               </div>
               <div className="apt-footer-center">
-                {totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : ""}
+                {totalPages > 1 ? `Page ${safePage} of ${totalPages}` : ""}
               </div>
               <div className="apt-footer-right">
                 {totalPages > 1 ? (
                   <>
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
+                      disabled={safePage === 1}
                       className="apt-btn"
                     >
                       Previous
@@ -605,7 +604,7 @@ const Table: React.FC<TableProps> = ({
                       onClick={() =>
                         setCurrentPage((p) => Math.min(totalPages, p + 1))
                       }
-                      disabled={currentPage === totalPages}
+                      disabled={safePage === totalPages}
                       className="apt-btn"
                     >
                       Next
