@@ -1,27 +1,24 @@
-# All Purpose Table WIP
+# All Purpose Table
 
-Universal React table component with TypeScript support and no dependencies or configuration required.
-Use one table component for everything in your app.
-DEMOs coming soon.
+A production-grade, plug-and-play React table component with TypeScript support and zero dependencies.
 
 ## ✨ Features
 
 - 🎯 **Plug and Play** - Install and use, no configuration needed
-- 📦 **Zero Dependencies** - No CSS frameworks required
-- 🟦 **TypeScript Native** - Full type safety and IntelliSense support
-- 🌑 **Dark Mode** - Automatic dark mode support via CSS
+- 📦 **Zero Dependencies** — No CSS frameworks or icon libraries required
+- 🟦 **TypeScript Native** — Full type safety and IntelliSense support
+- 🌑 **Dark Mode** — `prefers-color-scheme` and manual class toggling (`.dark`, `html.dark`)
 - 📊 **Feature Rich**:
-  - Sorting (multi-column support)
-  - Pagination
+  - Sorting per column
+  - Pagination with configurable rows per page
   - Column visibility toggle
-  - Column resizing
+  - Column resizing (drag) with optional localStorage persistence
   - Expandable rows
   - Custom cell renderers
+  - Full custom row rendering
   - Row click handlers
-  - Persistent column widths (with localStorage)
-  - Persistent column visibility (with localStorage)
-  - Mobile responsive with auto-sizing
-  - Virtual scrolling ready
+  - Scrollable body with fixed header
+  - Mobile responsive with optional auto-sizing on header click
 
 ## 📦 Installation
 
@@ -31,41 +28,18 @@ npm install all-purpose-table
 
 ## ⚡ Quick Start
 
-### JavaScript
-
-```jsx
+```tsx
 import { Table } from "all-purpose-table";
 
 function App() {
   const headers = [
-    { accessor: "id", label: "ID", isSortable: true },
-    { accessor: "name", label: "Name", isSortable: true },
-    { accessor: "email", label: "Email", isSortable: false },
-  ];
-
-  const data = [
-    { id: 1, name: "John Doe", email: "john@example.com" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com" },
-  ];
-
-  return <Table manualHeaders={headers} manualRowData={data} />;
-}
-```
-
-### TypeScript
-
-```tsx
-import { Table, TableHeader } from "all-purpose-table";
-
-function App() {
-  const headers: TableHeader[] = [
-    { accessor: "id", label: "ID", isSortable: true, width: 80 },
-    { accessor: "name", label: "Name", isSortable: true, minWidth: 150 },
+    { accessor: "id",    label: "ID",    isSortable: true },
+    { accessor: "name",  label: "Name",  isSortable: true },
     { accessor: "email", label: "Email" },
   ];
 
   const data = [
-    { id: 1, name: "John Doe", email: "john@example.com" },
+    { id: 1, name: "John Doe",   email: "john@example.com" },
     { id: 2, name: "Jane Smith", email: "jane@example.com" },
   ];
 
@@ -125,17 +99,73 @@ const headers: TableHeader[] = [
     accessor: "status",
     label: "Status",
     cellRenderer: ({ value }) => (
-      <span className={`status-${value.toLowerCase()}`}>{value}</span>
+      <span className={`badge badge-${value.toLowerCase()}`}>{value}</span>
     ),
   },
   {
     accessor: "actions",
     label: "Actions",
+    // Cells with accessor "actions" automatically stop row-click propagation
     cellRenderer: ({ row }) => (
       <button onClick={() => handleEdit(row.id)}>Edit</button>
     ),
   },
 ];
+```
+
+### Expandable Rows
+
+```tsx
+const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
+<Table
+  manualHeaders={headers}
+  manualRowData={data}
+  expandedRowId={expandedRowId}
+  onRowClick={(row) =>
+    setExpandedRowId(expandedRowId === row.id ? null : row.id)
+  }
+  renderExpandedRow={(row) => (
+    <div style={{ padding: 16 }}>
+      <p>Details for {row.name}</p>
+    </div>
+  )}
+/>
+```
+
+### Full Custom Row
+
+Set `fullRow: true` on any data object to replace that row entirely with `renderFullRow`:
+
+```tsx
+const data = [
+  { id: 1, name: "John" },
+  { id: "divider", fullRow: true }, // uses renderFullRow
+];
+
+<Table
+  manualHeaders={headers}
+  manualRowData={data}
+  renderFullRow={(row) => (
+    <div style={{ padding: "8px 16px", fontWeight: "bold" }}>Section Header</div>
+  )}
+/>
+```
+
+### Rows Per Page Selector
+
+The footer (including the dropdown) only renders when `onRowsPerPageChange` is provided:
+
+```tsx
+const [rowsPerPage, setRowsPerPage] = useState(20);
+
+<Table
+  manualHeaders={headers}
+  manualRowData={data}
+  rowsPerPage={rowsPerPage}
+  rowsPerPageOptions={[10, 20, 50, 100]}
+  onRowsPerPageChange={setRowsPerPage}
+/>
 ```
 
 ### Persistent Column Widths
@@ -146,26 +176,6 @@ const headers: TableHeader[] = [
   manualRowData={data}
   columnWidthsStorageKey="my-table-columns"
 />
-```
-
-### Expandable Rows
-
-```tsx
-const [expandedRowId, setExpandedRowId] = useState(null);
-
-<Table
-  manualHeaders={headers}
-  manualRowData={data}
-  expandedRowId={expandedRowId}
-  onRowClick={(row) =>
-    setExpandedRowId(expandedRowId === row.id ? null : row.id)
-  }
-  renderExpandedRow={(row) => (
-    <div className="row-details">
-      <p>Additional details for {row.name}</p>
-    </div>
-  )}
-/>;
 ```
 
 ### Column Visibility Toggle
@@ -203,80 +213,65 @@ function App() {
 
 ## 🎨 Styling & Customization
 
-The table comes with built-in styles that support both light and dark modes automatically. All CSS classes are prefixed with `apt-` to avoid conflicts.
+The table comes with built-in styles. All CSS classes are prefixed with `apt-` to avoid conflicts.
+
+### Dark Mode
+
+Dark mode is toggled by adding the `dark` class to any ancestor element (e.g. `<html>` or a wrapper `<div>`):
+
+```jsx
+// Toggle dark mode
+document.documentElement.classList.toggle("dark");
+```
+
+No extra configuration is needed — the component responds automatically.
 
 ### CSS Variables
 
-You can customize colors by overriding CSS variables:
+Override CSS variables to customise colours, spacing, and more:
 
 ```css
 :root {
   --apt-color-primary: #1f2937;
   --apt-color-border: #d1d5db;
   --apt-color-bg: white;
+  --apt-color-bg-secondary: #f9fafb;
   --apt-color-accent: #9333ea;
   /* ... and more */
 }
 ```
 
-### Custom Styling
+### CSS Class Reference
 
-All elements have semantic class names:
-
-```css
-.apt-table-container {
-  /* Main container */
-}
-.apt-table {
-  /* Table element */
-}
-.apt-thead {
-  /* Table header */
-}
-.apt-tbody {
-  /* Table body */
-}
-.apt-row {
-  /* Table row */
-}
-.apt-td {
-  /* Table cell */
-}
-.apt-footer {
-  /* Pagination footer */
-}
-```
+| Class | Element |
+|---|---|
+| `.apt-table-container` | Outermost wrapper |
+| `.apt-scroll-area` | Scrollable region (contains both table parts) |
+| `.apt-thead-wrapper` | Fixed header wrapper |
+| `.apt-tbody-wrapper` | Scrollable body wrapper |
+| `.apt-table` | `<table>` element |
+| `.apt-thead` | `<thead>` |
+| `.apt-tbody` | `<tbody>` |
+| `.apt-row` | `<tr>` |
+| `.apt-td` | `<td>` / `<th>` |
+| `.apt-footer` | Pagination footer |
 
 ## 🔧 Framework Compatibility
 
-Works seamlessly with:
-
-- ✅ Create React App
 - ✅ Next.js (App Router & Pages Router)
 - ✅ Vite
+- ✅ Create React App
 - ✅ Remix
 - ✅ Any React 17+ project
 
-## 📱 Mobile Support
-
-The table is fully responsive and includes:
-
-- Horizontal scrolling on small screens
-- Optional auto-sizing columns on header click
-- Touch-friendly column resizing
-- Configurable mobile breakpoint
-
-## 🌙 Themes
-
-Dark mode is supported automatically via CSS `prefers-color-scheme`. No JavaScript required!
+> **Note:** The component uses browser APIs (`localStorage`, `ResizeObserver`, `window`) — wrap it in a client-only boundary when using SSR frameworks like Next.js App Router.
 
 ## 🏭 Production Ready
 
-- **Tree-shakeable** - Only bundle what you use
-- **TypeScript** - Full type definitions included
-- **SSR Compatible** - Works with server-side rendering
-- **Accessible** - Semantic HTML and ARIA attributes
-- **Performant** - Optimized for large datasets
+- **Tree-shakeable** — Only bundle what you use
+- **TypeScript** — Full type definitions included
+- **Zero dependencies** — No external libraries required
+- **Performant** — `useMemo` and derived state throughout, no unnecessary re-renders
 
 ## 📄 License
 
