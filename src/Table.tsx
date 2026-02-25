@@ -562,7 +562,9 @@ const Table: React.FC<TableProps> = ({
             </table>
           </div>
           {(shouldPaginate && totalPages > 1) ||
-          (Array.isArray(rowsPerPageOptions) && rowsPerPageOptions.length) ? (
+          (Array.isArray(rowsPerPageOptions) &&
+            rowsPerPageOptions.length > 0 &&
+            onRowsPerPageChange) ? (
             <div className="apt-footer">
               <div className="apt-footer-left">
                 {Array.isArray(rowsPerPageOptions) &&
@@ -587,12 +589,10 @@ const Table: React.FC<TableProps> = ({
                   )}
               </div>
               <div className="apt-footer-center">
-                {shouldPaginate && totalPages > 1
-                  ? `Page ${currentPage} of ${totalPages}`
-                  : ""}
+                {totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : ""}
               </div>
               <div className="apt-footer-right">
-                {shouldPaginate && totalPages > 1 ? (
+                {totalPages > 1 ? (
                   <>
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
