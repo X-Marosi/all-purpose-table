@@ -1,6 +1,6 @@
 {
   "name": "all-purpose-table",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A production-grade, plug-and-play React Table component with TypeScript support",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -45,7 +45,7 @@
     "typescript": "^5.9.3"
   },
   "repository": {
-  "type": "git",
-  "url": "https://github.com/X-Marosi/all-purpose-tablel.git"
-}
+    "type": "git",
+    "url": "https://github.com/X-Marosi/all-purpose-tablel.git"
+  }
 }
