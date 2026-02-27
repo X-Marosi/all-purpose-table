@@ -43,5 +43,9 @@
     "@types/react-dom": "^19.2.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "repository": {
+  "type": "git",
+  "url": "https://github.com/X-Marosi/all-purpose-tablel.git"
+},
 }
