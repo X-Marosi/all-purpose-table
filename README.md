@@ -1,6 +1,6 @@
 # All Purpose Table
 
-A production-grade, plug-and-play React table component with TypeScript support and zero dependencies.
+Plug-and-play React table component with TypeScript support and zero dependencies.
 
 Demos can be found at: https://apt-demos.vercel.app/
 
