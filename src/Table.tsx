@@ -140,6 +140,7 @@ const Table: React.FC<TableProps> = ({
   const initialColumnWidthsRef = useRef<
     Record<string, string | number | undefined>
   >({});
+  const suppressHeaderClickRef = useRef(false);
   const tableRef = useRef<HTMLTableElement>(null);
   const textMeasureContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isMobile, setIsMobile] = useState(() => {
@@ -356,6 +357,11 @@ const Table: React.FC<TableProps> = ({
   };
 
   const handleHeaderClick = (header: TableHeader, colIndex: number) => {
+    if (suppressHeaderClickRef.current) {
+      suppressHeaderClickRef.current = false;
+      return;
+    }
+
     if (mobileAutoSizeOnHeaderClick && isMobile) {
       const isExpanded = expandedColumns.has(header.accessor);
       if (isExpanded) {
@@ -392,6 +398,7 @@ const Table: React.FC<TableProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent, accessor: string) => {
     e.preventDefault();
+    suppressHeaderClickRef.current = true;
     const startX = e.clientX;
     const th = (e.target as HTMLElement).closest("th");
     if (!th) return;
@@ -420,6 +427,11 @@ const Table: React.FC<TableProps> = ({
       document.body.style.userSelect = "";
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+
+      // Clear the one-shot suppression after click dispatch for this gesture.
+      window.setTimeout(() => {
+        suppressHeaderClickRef.current = false;
+      }, 0);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -484,6 +496,7 @@ const Table: React.FC<TableProps> = ({
                             e.stopPropagation();
                             handleMouseDown(e, header.accessor);
                           }}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </th>
                     );
