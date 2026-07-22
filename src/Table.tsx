@@ -6,6 +6,7 @@ import {
   useState,
   CSSProperties,
 } from "react";
+import ColumnFilter from "./ColumnFilter";
 
 // ============= TypeScript Interfaces =============
 
@@ -13,6 +14,11 @@ export interface TableHeader {
   accessor: string;
   label: string;
   isSortable?: boolean;
+  /**
+   * Enable the Excel-style filter dropdown for this column. When omitted, the
+   * column inherits the table-level `filterable` prop.
+   */
+  isFilterable?: boolean;
   width?: string | number;
   minWidth?: string | number;
   cellRenderer?: (args: { row: any; value: any }) => React.ReactNode;
@@ -21,6 +27,13 @@ export interface TableHeader {
 export interface SortConfig {
   key: string;
   direction: "asc" | "desc";
+}
+
+export type TableDensity = "default" | "compact";
+
+interface ColumnFilterState {
+  search: string;
+  excluded: Set<string>;
 }
 
 export interface TableProps {
@@ -42,9 +55,19 @@ export interface TableProps {
   expandedRowId?: string | null;
   renderExpandedRow?: (row: any) => React.ReactNode;
   renderFullRow?: (row: any) => React.ReactNode;
+  /** Enable Excel-style per-column filtering on every column (opt-in). */
+  filterable?: boolean;
+  /** Zebra striping: give every other row a subtle darker background. */
+  striped?: boolean;
+  /** Draw a horizontal divider line beneath each row. */
+  dividers?: boolean;
+  /** Draw vertical divider lines between columns (grid look). */
+  bordered?: boolean;
+  /** Row/cell density. `"compact"` tightens padding for dense data. */
+  density?: TableDensity;
 }
 
-// ============= SVG Icons (replaced react-icons) =============
+// ============= SVG Icons =============
 
 const SortIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -126,6 +149,11 @@ const Table: React.FC<TableProps> = ({
   expandedRowId,
   renderExpandedRow,
   renderFullRow,
+  filterable = false,
+  striped = false,
+  dividers = false,
+  bordered = false,
+  density = "default",
 }) => {
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(
     initialSort || null,
@@ -133,6 +161,9 @@ const Table: React.FC<TableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [columnWidths, setColumnWidths] = useState<
     Record<string, string | number>
+  >({});
+  const [columnFilters, setColumnFilters] = useState<
+    Record<string, ColumnFilterState>
   >({});
   const [expandedColumns, setExpandedColumns] = useState<Set<string>>(
     () => new Set(),
@@ -150,7 +181,8 @@ const Table: React.FC<TableProps> = ({
 
   const headers = useMemo(() => manualHeaders || [], [manualHeaders]);
 
-  // Reset column widths, expanded columns, and page when headers/storage key changes
+  // Reset column widths, expanded columns, filters, and page when headers or
+  // the storage key change.
   useEffect(() => {
     const initialWidths: Record<string, string | number | undefined> = {};
     headers.forEach((header) => {
@@ -164,6 +196,7 @@ const Table: React.FC<TableProps> = ({
       >,
     );
     setExpandedColumns(new Set());
+    setColumnFilters({});
     setCurrentPage(1);
   }, [headers, columnWidthsStorageKey]);
 
@@ -251,11 +284,49 @@ const Table: React.FC<TableProps> = ({
     });
   }, [manualRowData, headers]);
 
+  // Distinct values per filterable column, for the filter dropdown checklists.
+  const distinctValuesByColumn = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    const anyFilterable = headers.some((h) => h.isFilterable ?? filterable);
+    if (!anyFilterable) return map;
+    headers.forEach((header) => {
+      if (!(header.isFilterable ?? filterable)) return;
+      const set = new Set<string>();
+      rows.forEach((r) => set.add(String(r[header.accessor] ?? "")));
+      const arr = Array.from(set);
+      arr.sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+      );
+      map[header.accessor] = arr;
+    });
+    return map;
+  }, [rows, headers, filterable]);
+
+  const filteredRows = useMemo(() => {
+    const active = Object.entries(columnFilters).filter(
+      ([, f]) => f.search.trim() !== "" || f.excluded.size > 0,
+    );
+    if (active.length === 0) return rows;
+    return rows.filter((row) =>
+      active.every(([accessor, filter]) => {
+        const val = String(row[accessor] ?? "");
+        if (
+          filter.search.trim() !== "" &&
+          !val.toLowerCase().includes(filter.search.trim().toLowerCase())
+        ) {
+          return false;
+        }
+        if (filter.excluded.size > 0 && filter.excluded.has(val)) return false;
+        return true;
+      }),
+    );
+  }, [rows, columnFilters]);
+
   const sortedRows = useMemo(() => {
     if (!sortConfig || !sortConfig.key) {
-      return rows;
+      return filteredRows;
     }
-    const sortableRows = [...rows];
+    const sortableRows = [...filteredRows];
     sortableRows.sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -269,7 +340,7 @@ const Table: React.FC<TableProps> = ({
       return 0;
     });
     return sortableRows;
-  }, [rows, sortConfig]);
+  }, [filteredRows, sortConfig]);
 
   const effectiveShouldPaginate =
     shouldPaginate && sortedRows.length > rowsPerPage;
@@ -300,6 +371,56 @@ const Table: React.FC<TableProps> = ({
     setSortConfig({ key, direction });
     setCurrentPage(1);
   };
+
+  // ============= Filter handlers =============
+
+  const setColumnSearch = (accessor: string, value: string) => {
+    setColumnFilters((prev) => ({
+      ...prev,
+      [accessor]: {
+        search: value,
+        excluded: prev[accessor]?.excluded ?? new Set<string>(),
+      },
+    }));
+    setCurrentPage(1);
+  };
+
+  const setColumnExcluded = (accessor: string, next: Set<string>) => {
+    setColumnFilters((prev) => ({
+      ...prev,
+      [accessor]: {
+        search: prev[accessor]?.search ?? "",
+        excluded: next,
+      },
+    }));
+    setCurrentPage(1);
+  };
+
+  const clearColumnFilter = (accessor: string) => {
+    setColumnFilters((prev) => {
+      if (!prev[accessor]) return prev;
+      const next = { ...prev };
+      delete next[accessor];
+      return next;
+    });
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setColumnFilters({});
+    setCurrentPage(1);
+  };
+
+  const anyFilterActive = Object.values(columnFilters).some(
+    (f) => f.search.trim() !== "" || f.excluded.size > 0,
+  );
+
+  const setColumnSort = (accessor: string, direction: "asc" | "desc") => {
+    setSortConfig({ key: accessor, direction });
+    setCurrentPage(1);
+  };
+
+  // ============= Column width / resize =============
 
   const autoSizeColumn = (colIndex: number, header: TableHeader) => {
     if (!tableRef.current) return;
@@ -438,19 +559,31 @@ const Table: React.FC<TableProps> = ({
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const containerClassName = [
+    "apt-table-container",
+    striped && "apt-striped",
+    dividers && "apt-dividers",
+    bordered && "apt-bordered",
+    density === "compact" && "apt-compact",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  // Distinguish "no data at all" from "data filtered out": keep the header (and
+  // its filter controls) visible in the latter case so the user can undo it.
+  const noData = rows.length === 0;
+  const noMatches = !noData && sortedRows.length === 0;
+
   const containerStyle: CSSProperties = {
-    height:
-      sortedRows.length === 0
-        ? height
-        : !effectiveShouldPaginate
-          ? "auto"
-          : height,
+    height: noData ? height : !effectiveShouldPaginate ? "auto" : height,
     maxHeight: !effectiveShouldPaginate ? height : undefined,
   };
 
+  const spanCount = headers.length;
+
   return (
-    <div className="apt-table-container" style={containerStyle}>
-      {sortedRows.length === 0 ? (
+    <div className={containerClassName} style={containerStyle}>
+      {noData ? (
         <div className="apt-empty-state">No rows to display.</div>
       ) : (
         <>
@@ -473,6 +606,8 @@ const Table: React.FC<TableProps> = ({
               <thead className="apt-thead">
                 <tr>
                   {headers.map((header, idx) => {
+                    const columnFilterable =
+                      header.isFilterable ?? filterable;
                     const isHeaderClickable =
                       (mobileAutoSizeOnHeaderClick && isMobile) ||
                       header.isSortable;
@@ -485,10 +620,42 @@ const Table: React.FC<TableProps> = ({
                         }`}
                       >
                         <div className="apt-th-content">
-                          {header.label}
+                          <span className="apt-th-label">{header.label}</span>
                           {header.isSortable &&
                             !(mobileAutoSizeOnHeaderClick && isMobile) &&
                             getSortIcon(header.accessor)}
+                          {columnFilterable && (
+                            <ColumnFilter
+                              columnKey={header.accessor}
+                              label={header.label}
+                              distinctValues={
+                                distinctValuesByColumn[header.accessor] || []
+                              }
+                              search={
+                                columnFilters[header.accessor]?.search ?? ""
+                              }
+                              excluded={
+                                columnFilters[header.accessor]?.excluded ??
+                                new Set<string>()
+                              }
+                              sortConfig={sortConfig}
+                              isSortable={header.isSortable}
+                              onSort={(dir) =>
+                                setColumnSort(header.accessor, dir)
+                              }
+                              onSearchChange={(value) =>
+                                setColumnSearch(header.accessor, value)
+                              }
+                              onExcludedChange={(next) =>
+                                setColumnExcluded(header.accessor, next)
+                              }
+                              onClear={() =>
+                                clearColumnFilter(header.accessor)
+                              }
+                              onClearAll={clearAllFilters}
+                              anyFilterActive={anyFilterActive}
+                            />
+                          )}
                         </div>
                         <div
                           className="apt-resizer"
@@ -504,19 +671,27 @@ const Table: React.FC<TableProps> = ({
                 </tr>
               </thead>
               <tbody className="apt-tbody">
-                {paginatedRows.map((row) => {
+                {noMatches && (
+                  <tr className="apt-row">
+                    <td colSpan={spanCount} className="apt-td apt-no-matches">
+                      No rows match the current filters.
+                    </td>
+                  </tr>
+                )}
+                {paginatedRows.map((row, rowIdx) => {
                   const isExpanded = expandedRowId === row.id;
                   const isFullRow =
                     typeof renderFullRow === "function" && row?._meta?.fullRow;
+                  const altClass = rowIdx % 2 === 1 ? "apt-row-alt" : "";
                   return (
                     <Fragment key={row.id}>
                       {isFullRow ? (
                         <tr
-                          className={`apt-row ${rowClassName ? rowClassName(row) : ""}`}
+                          className={`apt-row ${altClass} ${rowClassName ? rowClassName(row) : ""}`}
                           onClick={() => onRowClick && onRowClick(row)}
                         >
                           <td
-                            colSpan={headers.length}
+                            colSpan={spanCount}
                             className="apt-td"
                             style={{ padding: 0 }}
                           >
@@ -525,7 +700,7 @@ const Table: React.FC<TableProps> = ({
                         </tr>
                       ) : (
                         <tr
-                          className={`apt-row ${rowClassName ? rowClassName(row) : ""}`}
+                          className={`apt-row ${altClass} ${rowClassName ? rowClassName(row) : ""}`}
                           onClick={() => onRowClick && onRowClick(row)}
                           style={{ height: `${rowHeight}px` }}
                         >
@@ -559,7 +734,7 @@ const Table: React.FC<TableProps> = ({
                         typeof renderExpandedRow === "function" && (
                           <tr className="apt-row-expanded">
                             <td
-                              colSpan={headers.length}
+                              colSpan={spanCount}
                               className="apt-td"
                               style={{ padding: 0 }}
                             >

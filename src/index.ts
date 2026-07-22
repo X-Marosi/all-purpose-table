@@ -10,7 +10,10 @@ export type {
   TableProps,
   TableHeader,
   SortConfig,
+  TableDensity,
 } from "./Table";
+
+export type { ColumnFilterProps } from "./ColumnFilter";
 
 export type {
   ColumnVisibilityToggleProps,

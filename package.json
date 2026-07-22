@@ -1,8 +1,8 @@
 {
   "name": "all-purpose-table",
-  "version": "1.0.11",
+  "version": "1.1.5",
   "description": "A production-grade, plug-and-play React Table component with TypeScript support",
-  "main": "dist/index.cjs",
+  "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
@@ -33,6 +33,7 @@
     "datatable",
     "pagination",
     "sorting",
+    "filtering",
     "column visibility",
     "typescript",
     "plug-and-play"

@@ -4,23 +4,26 @@
 :root {
   --apt-color-primary: #371f1f;
   --apt-color-border: #d1d5db;
+  --apt-color-border-subtle: #eceff3;
   --apt-color-bg: white;
   --apt-color-bg-secondary: #e5e7eb;
   --apt-color-bg-hover: #f3f4f6;
+  --apt-color-row-stripe: #edeff3;
   --apt-color-text: #1f2937;
   --apt-color-text-muted: #6b7280;
   --apt-color-text-muted-light: #9ca3af;
   --apt-color-accent: #9333ea;
+  --apt-color-accent-soft: rgba(147, 51, 234, 0.12);
   --apt-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --apt-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  
+
   /* Resizer colors */
   --apt-resizer-color: #bbb;
   --apt-resizer-hover-color: #888;
-  
+
   /* Sortable header hover */
   --apt-th-sortable-hover: #d1d5db;
-  
+
   /* Button colors */
   --apt-btn-bg: white;
   --apt-btn-hover-bg: #d1d5db;
@@ -31,14 +34,17 @@
   :root {
     --apt-color-primary: #eee;
     --apt-color-border: #333;
-    --apt-color-bg: #1e1e1e;
+    --apt-color-border-subtle: #2a2a2a;
+    --apt-color-bg: #161616;
     --apt-color-bg-secondary: #333;
     --apt-color-bg-hover: rgba(126, 126, 126, 0.15);
+    --apt-color-row-stripe: rgba(255, 255, 255, 0.05);
     --apt-color-text: #eee;
     --apt-color-text-muted: #d1d5db;
     --apt-color-text-muted-light: #444;
     --apt-color-accent: #a855f7;
-    
+    --apt-color-accent-soft: rgba(168, 85, 247, 0.2);
+
     /* Resizer colors */
     --apt-resizer-color: #666;
     --apt-resizer-hover-color: #999;
@@ -53,26 +59,29 @@
 }
 
 /* Manual dark mode class support - use higher specificity */
-html.dark, 
+html.dark,
 .dark,
 :root.dark {
   --apt-color-primary: #eee;
   --apt-color-border: #333;
-  --apt-color-bg: #1e1e1e;
+  --apt-color-border-subtle: #2a2a2a;
+  --apt-color-bg: #161616;
   --apt-color-bg-secondary: #333;
   --apt-color-bg-hover: rgba(126, 126, 126, 0.15);
+  --apt-color-row-stripe: rgba(255, 255, 255, 0.05);
   --apt-color-text: #eee;
   --apt-color-text-muted: #d1d5db;
   --apt-color-text-muted-light: #444;
   --apt-color-accent: #a855f7;
-  
+  --apt-color-accent-soft: rgba(168, 85, 247, 0.2);
+
   /* Resizer colors */
   --apt-resizer-color: #666;
   --apt-resizer-hover-color: #999;
-  
+
   /* Sortable header hover */
   --apt-th-sortable-hover: #444;
-  
+
   /* Button colors */
   --apt-btn-bg: #444;
   --apt-btn-hover-bg: #555;
@@ -84,16 +93,19 @@ html.light,
 :root.light {
   --apt-color-primary: #371f1f;
   --apt-color-border: #d1d5db;
+  --apt-color-border-subtle: #eceff3;
   --apt-color-bg: white;
   --apt-color-bg-secondary: #e5e7eb;
   --apt-color-bg-hover: #f3f4f6;
+  --apt-color-row-stripe: #edeff3;
   --apt-color-text: #1f2937;
   --apt-color-text-muted: #6b7280;
   --apt-color-text-muted-light: #9ca3af;
   --apt-color-accent: #9333ea;
+  --apt-color-accent-soft: rgba(147, 51, 234, 0.12);
   --apt-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --apt-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  
+
   /* Resizer colors */
   --apt-resizer-color: #bbb;
   --apt-resizer-hover-color: #888;
@@ -118,6 +130,10 @@ html.light,
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Stay within the parent so wide tables scroll internally instead of
+     pushing the layout off-screen (esp. inside flex/grid parents). */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Empty state */
@@ -135,6 +151,14 @@ html.light,
 .apt-scroll-area {
   flex-grow: 1;
   overflow: auto;
+}
+
+/* "No matching rows" body message (data exists but is filtered out) */
+.apt-no-matches {
+  text-align: center;
+  padding: 32px 8px;
+  color: var(--apt-color-text-muted-light);
+  white-space: normal;
 }
 
 /* Table base */
@@ -160,8 +184,15 @@ html.light,
 /* Table header cell */
 .apt-th {
   position: relative;
-  padding: 12px 8px;
+  padding: 10px 12px;
   border: none;
+  border-bottom: 1px solid var(--apt-color-border);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--apt-color-text);
+  user-select: none;
 }
 
 .apt-th-sortable {
@@ -175,26 +206,55 @@ html.light,
 .apt-th-content {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 2px;
 }
 
-/* Column resizer */
+.apt-th-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Column resizer — subtle, revealed on header hover */
 .apt-resizer {
   position: absolute;
-  right: 0;
-  top: 4px;
-  height: 80%;
-  width: 3px;
-  border-radius: 2px;
+  right: -3px;
+  top: 0;
+  height: 100%;
+  width: 7px;
   cursor: col-resize;
   user-select: none;
   touch-action: none;
+  z-index: 2;
+  background-color: transparent;
+}
+
+.apt-resizer::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  top: 20%;
+  height: 60%;
+  width: 2px;
+  border-radius: 2px;
+  background-color: transparent;
+  transition: background-color 0.15s;
+}
+
+.apt-th:hover .apt-resizer::after {
   background-color: var(--apt-resizer-color);
 }
 
-.apt-resizer:hover,
-.apt-th:hover .apt-resizer {
+.apt-resizer:hover::after {
   background-color: var(--apt-resizer-hover-color);
+}
+
+/* The last column's resizer must stay flush with the table's right edge —
+   the straddling offset would poke past it and create a sliver of horizontal
+   overflow, which forces spurious scrollbars. */
+.apt-thead th:last-child .apt-resizer {
+  right: 0;
 }
 
 
@@ -222,7 +282,7 @@ html.light,
 
 /* Table cell */
 .apt-td {
-  padding: 4px 8px;
+  padding: 6px 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,7 +290,7 @@ html.light,
 }
 
 .apt-td-actions {
-  padding: 4px 8px;
+  padding: 6px 12px;
   border: none;
 }
 
@@ -434,6 +494,269 @@ html.light,
   font-size: 0.875rem;
   color: var(--apt-color-primary);
   flex: 1;
+}
+
+/* ===============================================
+   STYLE TOGGLE MODIFIERS
+   =============================================== */
+
+/* Striped rows — every other data row gets a subtle darker background */
+.apt-striped .apt-row.apt-row-alt {
+  background-color: var(--apt-color-row-stripe);
+}
+
+/* Row dividers — horizontal separator beneath each row */
+.apt-dividers .apt-tbody .apt-row > td {
+  border-bottom: 1px solid var(--apt-color-border-subtle);
+}
+
+/* Column dividers — vertical separators between columns */
+.apt-bordered .apt-th:not(.apt-th-spacer),
+.apt-bordered .apt-td:not(.apt-td-spacer) {
+  border-right: 1px solid var(--apt-color-border-subtle);
+}
+
+.apt-bordered .apt-th:not(.apt-th-spacer) {
+  border-right-color: var(--apt-color-border);
+}
+
+/* Compact density — tighter padding */
+.apt-compact .apt-th {
+  padding: 6px 8px;
+}
+
+.apt-compact .apt-td,
+.apt-compact .apt-td-actions {
+  padding: 2px 8px;
+}
+
+/* Hover always wins over striping (kept above the stripe via specificity).
+   Striped rows get a slightly darker hover so hovering always darkens. */
+.apt-row:hover {
+  background-color: var(--apt-color-bg-hover);
+}
+
+.apt-striped .apt-row.apt-row-alt:hover {
+  background-color: var(--apt-color-bg-secondary);
+}
+
+/* ===============================================
+   COLUMN FILTER (Excel-style dropdown)
+   =============================================== */
+
+.apt-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 2px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  /* Inherit the header text color (like the sort icon) so it stays visible
+     in dark mode; the dimming comes from opacity, not a darker color. */
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.apt-th:hover .apt-filter-btn {
+  opacity: 1;
+}
+
+.apt-filter-btn:hover {
+  background-color: var(--apt-color-accent-soft);
+  color: var(--apt-color-accent);
+}
+
+.apt-filter-btn-active {
+  opacity: 1;
+  color: var(--apt-color-accent);
+  background-color: var(--apt-color-accent-soft);
+}
+
+.apt-filter-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+/* Popover (rendered in a portal on document.body) */
+.apt-filter-popover {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--apt-color-border);
+  border-radius: 8px;
+  background-color: var(--apt-color-bg);
+  color: var(--apt-color-text);
+  box-shadow: var(--apt-shadow-lg);
+  padding: 8px;
+  font-size: 0.8125rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.apt-filter-sort-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.apt-filter-sort-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border: 1px solid var(--apt-color-border);
+  border-radius: 6px;
+  background-color: var(--apt-btn-bg);
+  color: var(--apt-color-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.apt-filter-sort-btn:hover {
+  background-color: var(--apt-color-bg-hover);
+}
+
+.apt-filter-sort-btn-active {
+  border-color: var(--apt-color-accent);
+  color: var(--apt-color-accent);
+  background-color: var(--apt-color-accent-soft);
+}
+
+.apt-filter-sort-icon {
+  width: 11px;
+  height: 11px;
+}
+
+.apt-filter-search-wrap {
+  margin-bottom: 6px;
+}
+
+.apt-filter-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--apt-color-border);
+  border-radius: 6px;
+  background-color: var(--apt-color-bg);
+  color: var(--apt-color-text);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.apt-filter-search:focus {
+  border-color: var(--apt-color-accent);
+  box-shadow: 0 0 0 2px var(--apt-color-accent-soft);
+}
+
+.apt-filter-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 2px 0;
+}
+
+.apt-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.apt-filter-item:hover {
+  background-color: var(--apt-color-bg-hover);
+}
+
+.apt-filter-item-all {
+  border-bottom: 1px solid var(--apt-color-border-subtle);
+  border-radius: 0;
+  margin-bottom: 2px;
+  padding-bottom: 6px;
+  font-weight: 600;
+}
+
+.apt-filter-checkbox {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--apt-color-accent);
+}
+
+.apt-filter-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apt-filter-empty {
+  padding: 12px 6px;
+  text-align: center;
+  color: var(--apt-color-text-muted);
+  font-size: 0.75rem;
+}
+
+.apt-filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--apt-color-border-subtle);
+}
+
+.apt-filter-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.apt-filter-clear {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--apt-color-accent);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.apt-filter-clear:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.apt-filter-clear:disabled {
+  color: var(--apt-color-text-muted-light);
+  cursor: not-allowed;
+}
+
+.apt-filter-done {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--apt-color-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.apt-filter-done:hover {
+  opacity: 0.9;
 }
 
 /* Utility classes */

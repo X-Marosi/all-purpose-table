@@ -73,6 +73,11 @@ function App() {
 | `renderFullRow`               | `(row) => ReactNode` | `undefined`     | Render function for custom full-width rows (can be used as header/dropdown row) |
 | `mobileAutoSizeOnHeaderClick` | `boolean`            | `false`         | Enable mobile auto-sizing on header click                                       |
 | `mobileBreakpoint`            | `number`             | `768`           | Mobile breakpoint in pixels                                                     |
+| `filterable`                  | `boolean`            | `false`         | Enable the Excel-style filter dropdown on every column (opt-in)                 |
+| `striped`                     | `boolean`            | `false`         | Zebra striping — every other row gets a subtle darker background                |
+| `dividers`                    | `boolean`            | `false`         | Horizontal divider line beneath each row                                        |
+| `bordered`                    | `boolean`            | `false`         | Vertical divider lines between columns (grid look)                              |
+| `density`                     | `"default" \| "compact"` | `"default"` | Row/cell padding density                                                        |
 
 ### TableHeader Interface
 
@@ -81,6 +86,7 @@ interface TableHeader {
   accessor: string; // Key to access data in row object
   label: string; // Display label for column
   isSortable?: boolean; // Enable sorting for this column
+  isFilterable?: boolean; // Override the table `filterable` prop for this column
   width?: string | number; // Initial column width
   minWidth?: string | number; // Minimum column width
   cellRenderer?: (args: {
@@ -89,6 +95,31 @@ interface TableHeader {
     value: any;
   }) => React.ReactNode;
 }
+```
+
+### Column Filtering
+
+Set `filterable` on the table to add an Excel-style filter dropdown to every column. Each dropdown offers sort (asc/desc), a search box, and a checklist of the column's distinct values:
+
+```tsx
+<Table manualHeaders={headers} manualRowData={data} filterable />
+```
+
+The search box does double duty: it filters the rows by substring **and** narrows the value checklist. `isFilterable` on an individual column overrides the table-level default (set it to `false` to exclude a column, or `true` to enable just one column while `filterable` is off).
+
+### Style Options
+
+Base styling is professional by default; these boolean props toggle common variations (they compose freely):
+
+```tsx
+<Table
+  manualHeaders={headers}
+  manualRowData={data}
+  striped        // alternating row backgrounds
+  dividers       // horizontal line under each row
+  bordered       // vertical lines between columns
+  density="compact" // tighter padding
+/>
 ```
 
 ## 🔩 Advanced Usage
