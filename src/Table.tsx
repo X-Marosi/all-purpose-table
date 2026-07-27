@@ -55,6 +55,12 @@ export interface TableProps {
   expandedRowId?: string | null;
   renderExpandedRow?: (row: any) => React.ReactNode;
   renderFullRow?: (row: any) => React.ReactNode;
+  /**
+   * Called whenever the set of rows currently passing the column filters
+   * changes (post-filter, ignoring pagination). Useful for driving a
+   * "select all" that should only cover the visible/filtered rows.
+   */
+  onVisibleRowsChange?: (rows: any[]) => void;
   /** Enable Excel-style per-column filtering on every column (opt-in). */
   filterable?: boolean;
   /** Zebra striping: give every other row a subtle darker background. */
@@ -149,6 +155,7 @@ const Table: React.FC<TableProps> = ({
   expandedRowId,
   renderExpandedRow,
   renderFullRow,
+  onVisibleRowsChange,
   filterable = false,
   striped = false,
   dividers = false,
@@ -321,6 +328,14 @@ const Table: React.FC<TableProps> = ({
       }),
     );
   }, [rows, columnFilters]);
+
+  // Report the current post-filter row set (ignores pagination) so callers can
+  // scope actions like "select all" to the visible/filtered rows.
+  const onVisibleRowsChangeRef = useRef(onVisibleRowsChange);
+  onVisibleRowsChangeRef.current = onVisibleRowsChange;
+  useEffect(() => {
+    onVisibleRowsChangeRef.current?.(filteredRows);
+  }, [filteredRows]);
 
   const sortedRows = useMemo(() => {
     if (!sortConfig || !sortConfig.key) {
