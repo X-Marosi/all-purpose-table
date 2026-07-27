@@ -128,13 +128,27 @@ const ColumnFilter: React.FC<ColumnFilterProps> = ({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    // Close when the page/table scrolls (the popover is position:fixed and
-    // won't follow), but ignore scrolling inside the popover's own value list.
+    // Close when the whole page scrolls or the window resizes (the popover is
+    // position:fixed and won't follow). Ignore scrolls that originate inside the
+    // popover's own value list AND scrolls fired by an inner scroll container —
+    // e.g. the table body clamping its scrollTop when "select all" filters rows
+    // out. Otherwise the master checkbox would dismiss its own menu.
     const onScroll = (e: Event) => {
-      const target = e.target as Node;
-      if (popoverRef.current && target && popoverRef.current.contains(target)) {
+      const target = e.target as Node | Window | null;
+      if (
+        target &&
+        target instanceof Node &&
+        popoverRef.current &&
+        popoverRef.current.contains(target)
+      ) {
         return;
       }
+      const isPageScroll =
+        target === window ||
+        target === document ||
+        target === document.documentElement ||
+        target === document.body;
+      if (!isPageScroll) return;
       setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
