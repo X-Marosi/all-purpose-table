@@ -63,6 +63,13 @@ export interface TableProps {
   onVisibleRowsChange?: (rows: any[]) => void;
   /** Enable Excel-style per-column filtering on every column (opt-in). */
   filterable?: boolean;
+  /**
+   * Default column filters applied on mount (and re-applied if the headers /
+   * storage key change), keyed by column accessor. Each may set a `search`
+   * string and/or a list of distinct cell values to `excluded` (hide). Users
+   * can still clear them through the normal filter UI.
+   */
+  initialColumnFilters?: Record<string, InitialColumnFilter>;
   /** Zebra striping: give every other row a subtle darker background. */
   striped?: boolean;
   /** Draw a horizontal divider line beneath each row. */
@@ -113,6 +120,32 @@ const SortDownIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 // ============= Utilities =============
 
+/** Serializable default filter shape callers pass via `initialColumnFilters`. */
+export interface InitialColumnFilter {
+  search?: string;
+  /** Distinct cell values to exclude (hide) by default for this column. */
+  excluded?: string[];
+}
+
+/** Normalize the serializable initial filters into internal state (fresh Sets). */
+function buildInitialColumnFilters(
+  map: Record<string, InitialColumnFilter> | undefined,
+): Record<string, ColumnFilterState> {
+  const out: Record<string, ColumnFilterState> = {};
+  if (map && typeof map === "object") {
+    for (const [key, value] of Object.entries(map)) {
+      const search = typeof value?.search === "string" ? value.search : "";
+      const excluded = new Set(
+        Array.isArray(value?.excluded) ? value!.excluded.map(String) : [],
+      );
+      if (search.trim() !== "" || excluded.size > 0) {
+        out[key] = { search, excluded };
+      }
+    }
+  }
+  return out;
+}
+
 function loadStoredColumnWidths(
   columnWidthsStorageKey: string | undefined,
   fallback: Record<string, string | number | undefined>,
@@ -157,6 +190,7 @@ const Table: React.FC<TableProps> = ({
   renderFullRow,
   onVisibleRowsChange,
   filterable = false,
+  initialColumnFilters,
   striped = false,
   dividers = false,
   bordered = false,
@@ -169,9 +203,11 @@ const Table: React.FC<TableProps> = ({
   const [columnWidths, setColumnWidths] = useState<
     Record<string, string | number>
   >({});
+  const initialColumnFiltersRef = useRef(initialColumnFilters);
+  initialColumnFiltersRef.current = initialColumnFilters;
   const [columnFilters, setColumnFilters] = useState<
     Record<string, ColumnFilterState>
-  >({});
+  >(() => buildInitialColumnFilters(initialColumnFilters));
   const [expandedColumns, setExpandedColumns] = useState<Set<string>>(
     () => new Set(),
   );
@@ -203,7 +239,9 @@ const Table: React.FC<TableProps> = ({
       >,
     );
     setExpandedColumns(new Set());
-    setColumnFilters({});
+    setColumnFilters(
+      buildInitialColumnFilters(initialColumnFiltersRef.current),
+    );
     setCurrentPage(1);
   }, [headers, columnWidthsStorageKey]);
 
